@@ -17,32 +17,10 @@ namespace Sockets.ClientServer
             //await ClientServer();
 
             // Ring
-            await Ring();
+            //await Ring();
 
             // Node selector
-            //var selector_ips = new List<string>()
-            //{
-            //    "127.0.0.2", "127.0.0.3"
-            //};
-            //var validators = new List<Func<int, bool>>()
-            //{
-            //    x => x % 3 == 0,
-            //    x => x % 5 == 0
-            //};
-            //var selectorNode = new SelectorNode("127.0.0.1", 1234, 1234, selector_ips);
-            //var receiverNodes = new List<ReceiverNode>();
-            //foreach(var ip in selector_ips)
-            //{
-            //    var index = selector_ips.IndexOf(ip);
-            //    receiverNodes.Add(new ReceiverNode(ip, 1234, "127.0.0.1", 1234, validators[index]));
-            //}
-
-            //foreach (var node in receiverNodes)
-            //{
-            //    node.Start();
-            //}
-
-            //await selectorNode.Start();
+            await NodeSelector();
 
             // Relay
             //var relay_ips = new List<string>()
@@ -76,8 +54,7 @@ namespace Sockets.ClientServer
         }
 
         static Task Ring() {
-            var ringNodes = new List<RingNode>()
-            {
+            var ringNodes = new List<RingNode>() {
                 new RingNode("127.0.0.1", 1234, "127.0.0.2", 1234),
                 new RingNode("127.0.0.2", 1234, "127.0.0.3", 1234),
                 new RingNode("127.0.0.3", 1234, "127.0.0.1", 1234)
@@ -92,6 +69,29 @@ namespace Sockets.ClientServer
             while (!Semaphore.Finished) ;
 
             return Task.CompletedTask;
+        }
+
+        static async Task NodeSelector() {
+            var selectorIps = new List<string>() {
+                "127.0.0.2", "127.0.0.3"
+            };
+            var payloadValidators = new List<Func<int, bool>>() {
+                x => x % 3 == 0,
+                x => x % 5 == 0
+            };
+            var receiverNodes = new List<ReceiverNode>();
+            foreach (var ip in selectorIps) {
+                var index = selectorIps.IndexOf(ip);
+                receiverNodes.Add(new ReceiverNode(ip, 1234, "127.0.0.1", 1234, payloadValidators[index]));
+            }
+
+            var selectorNode = new SelectorNode("127.0.0.1", 1234, 1234, selectorIps);
+
+            foreach (var node in receiverNodes) {
+                node.StartListening();
+            }
+
+            await selectorNode.Send();
         }
     }
 }

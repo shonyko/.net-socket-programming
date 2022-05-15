@@ -35,13 +35,11 @@ namespace Sockets.Ring {
         }
 
         private void OnReceive(IAsyncResult ar) {
-            try
-            {
+            try {
                 var state = (SocketState)ar.AsyncState;
                 var readBytes = state.socket.EndReceive(ar);
 
-                if (readBytes <= 0)
-                {
+                if (readBytes <= 0) {
                     state.socket.Shutdown(SocketShutdown.Both);
                     state.socket.Close();
                     StartListening();
@@ -58,8 +56,7 @@ namespace Sockets.Ring {
                 } else Semaphore.Finished = true;
 
                 state.socket.BeginReceive(state.buffer, 0, SocketState.BufferSize, 0, new AsyncCallback(OnReceive), state);
-            } catch(Exception e)
-            {
+            } catch(Exception e) {
                 Console.WriteLine($"{localEndPoint.Address}: {e.Message}");
             }
         }
@@ -68,7 +65,9 @@ namespace Sockets.Ring {
             outSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             outSocket.Bind(new IPEndPoint(localEndPoint.Address, 0));
             outSocket.Connect(remoteEndPoint);
+
             outSocket.Send(data);
+
             outSocket.Shutdown(SocketShutdown.Both);
             outSocket.Close();
         }

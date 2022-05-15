@@ -3,68 +3,55 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 
-namespace Sockets.NodeSelector
-{
-    class ReceiverNode
-    {
+namespace Sockets.NodeSelector {
+    class ReceiverNode {
         private Socket inSocket;
-        private string localipv4;
-        private int localport;
+        private readonly IPEndPoint localEndPoint;
 
         private Socket outSocket;
-        private string remoteipv4;
-        private int remoteport;
+        private readonly IPEndPoint remoteEndPoint;
 
-        Func<int, bool> payloadValidator;
+        private readonly Func<int, bool> payloadValidator;
 
-        public ReceiverNode(string localipv4, int localport, string remoteipv4, int remoteport, Func<int, bool> payloadValidator)
-        {
-            this.localipv4 = localipv4;
-            this.localport = localport;
-            this.remoteipv4 = remoteipv4;
-            this.remoteport = remoteport;
+        public ReceiverNode(string localIpAddress, int localPort, string remoteIpAddress, int remotePort, Func<int, bool> payloadValidator) {
+            localEndPoint = new IPEndPoint(IPAddress.Parse(localIpAddress), localPort);
+            remoteEndPoint = new IPEndPoint(IPAddress.Parse(remoteIpAddress), remotePort);
             this.payloadValidator = payloadValidator;
-        }
 
-        public void Start()
-        {
-            var localEndPoint = new IPEndPoint(IPAddress.Parse(localipv4), localport);
+            outSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            outSocket.Bind(new IPEndPoint(localEndPoint.Address, 0));
+
             inSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
             inSocket.Bind(localEndPoint);
+        }
 
+        public void StartListening() {
             byte[] buffer = new byte[256];
-            var args = new SocketAsyncEventArgs()
-            {
+            var args = new SocketAsyncEventArgs() {
                 RemoteEndPoint = new IPEndPoint(IPAddress.Any, 0),
             };
             args.SetBuffer(buffer, 0, 256);
             args.Completed += OnReceive;
+
             var pending = inSocket.ReceiveFromAsync(args);
             if (!pending) OnReceive(inSocket, args);
         }
 
-        public void OnReceive(object sender, SocketAsyncEventArgs args)
-        {
+        public void OnReceive(object sender, SocketAsyncEventArgs args) {
             var paylaod = Encoding.ASCII.GetString(args.Buffer);
             var value = int.Parse(paylaod);
             
-            if (payloadValidator(value))
-            {
-                Console.WriteLine($"{localipv4}: Got {value}, sending ACK...");
-                var localEndPoint = new IPEndPoint(IPAddress.Parse(localipv4), 0);
-                outSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-                outSocket.Bind(localEndPoint);
+            if (payloadValidator(value)) {
+                Console.WriteLine($"{localEndPoint.Address}: Got {value}, sending ACK...");
 
                 var buffer = Encoding.ASCII.GetBytes("ACK");
-                var new_args = new SocketAsyncEventArgs()
-                {
-                    RemoteEndPoint = new IPEndPoint(IPAddress.Parse(remoteipv4), remoteport)
+                var new_args = new SocketAsyncEventArgs() {
+                    RemoteEndPoint = remoteEndPoint
                 };
                 new_args.SetBuffer(buffer, 0, buffer.Length);
                 outSocket.SendToAsync(new_args);
-            } else
-            {
-                Console.WriteLine($"{localipv4}: Got {value}");
+            } else {
+                Console.WriteLine($"{localEndPoint.Address}: Got {value}");
             }
 
             var pending = inSocket.ReceiveFromAsync(args);
