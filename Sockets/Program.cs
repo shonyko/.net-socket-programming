@@ -14,14 +14,7 @@ namespace Sockets.ClientServer
             Console.WriteLine("Functioneaza!");
 
             // Client Server
-            //var client = new Client("127.0.0.2", 1234);
-            //var server = new Server("127.0.0.2", 1234);
-
-            //server.Listen();
-            //client.Connect();
-            //while (!client.Connected) ;
-            //client.Disconnect();
-            //server.Close();
+            await ClientServer();
 
             // Ring
             //var ringNodes = new List<RingNode>()
@@ -49,29 +42,29 @@ namespace Sockets.ClientServer
             //}
 
             // Node selector
-            var selector_ips = new List<string>()
-            {
-                "127.0.0.2", "127.0.0.3"
-            };
-            var validators = new List<Func<int, bool>>()
-            {
-                x => x % 3 == 0,
-                x => x % 5 == 0
-            };
-            var selectorNode = new SelectorNode("127.0.0.1", 1234, 1234, selector_ips);
-            var receiverNodes = new List<ReceiverNode>();
-            foreach(var ip in selector_ips)
-            {
-                var index = selector_ips.IndexOf(ip);
-                receiverNodes.Add(new ReceiverNode(ip, 1234, "127.0.0.1", 1234, validators[index]));
-            }
+            //var selector_ips = new List<string>()
+            //{
+            //    "127.0.0.2", "127.0.0.3"
+            //};
+            //var validators = new List<Func<int, bool>>()
+            //{
+            //    x => x % 3 == 0,
+            //    x => x % 5 == 0
+            //};
+            //var selectorNode = new SelectorNode("127.0.0.1", 1234, 1234, selector_ips);
+            //var receiverNodes = new List<ReceiverNode>();
+            //foreach(var ip in selector_ips)
+            //{
+            //    var index = selector_ips.IndexOf(ip);
+            //    receiverNodes.Add(new ReceiverNode(ip, 1234, "127.0.0.1", 1234, validators[index]));
+            //}
 
-            foreach (var node in receiverNodes)
-            {
-                node.Start();
-            }
+            //foreach (var node in receiverNodes)
+            //{
+            //    node.Start();
+            //}
 
-            await selectorNode.Start();
+            //await selectorNode.Start();
 
             // Relay
             //var relay_ips = new List<string>()
@@ -92,6 +85,16 @@ namespace Sockets.ClientServer
             //}
 
             //await senderNode.Start();
+        }
+
+        static async Task ClientServer() {
+            var client = new Client("127.0.0.1", 1234, "127.0.0.2", 1234);
+            var server = new Server("127.0.0.2", 1234);
+
+            server.StartListening();
+            await client.Connect();
+            client.Disconnect();
+            server.StopListening();
         }
     }
 }
