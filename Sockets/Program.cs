@@ -5,12 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Sockets.ClientServer
-{
-    class Program
-    {
-        static async Task Main(string[] args)
-        {
+namespace Sockets.ClientServer {
+    class Program {
+        static async Task Main(string[] args) {
             Console.WriteLine("Functioneaza!");
 
             // Client Server
@@ -20,27 +17,10 @@ namespace Sockets.ClientServer
             //await Ring();
 
             // Node selector
-            await NodeSelector();
+            //await NodeSelector();
 
             // Relay
-            //var relay_ips = new List<string>()
-            //{
-            //    "127.0.0.1", "127.0.0.2", "127.0.0.3"
-            //};
-            //var senderNode = new SenderNode("127.0.0.15", 1234, relay_ips[0], 1234, relay_ips);
-            //var relayNodes = new List<RelayNode>();
-            //for (int i = 0; i < relay_ips.Count - 1; i++)
-            //{
-            //    relayNodes.Add(new RelayNode(relay_ips[i], 1234, relay_ips[i + 1], 1234));
-            //}
-            //relayNodes.Add(new RelayNode(relay_ips[^1], 1234));
-
-            //foreach (var node in relayNodes)
-            //{
-            //    node.Start();
-            //}
-
-            //await senderNode.Start();
+            //await Relay();
         }
 
         static async Task ClientServer() {
@@ -92,6 +72,24 @@ namespace Sockets.ClientServer
             }
 
             await selectorNode.Send();
+        }
+
+        static async Task Relay() {
+            var relayIps = new List<string>() {
+                "127.0.0.1", "127.0.0.2", "127.0.0.3"
+            };
+            var senderNode = new SenderNode("127.0.0.15", 1234, relayIps[0], 1234, relayIps);
+            var relayNodes = new List<RelayNode>();
+            for (int i = 0; i < relayIps.Count - 1; i++) {
+                relayNodes.Add(new RelayNode(relayIps[i], 1234, relayIps[i + 1], 1234));
+            }
+            relayNodes.Add(new RelayNode(relayIps[^1], 1234));
+
+            foreach (var node in relayNodes) {
+                node.StartListening();
+            }
+
+            await senderNode.Send();
         }
     }
 }
