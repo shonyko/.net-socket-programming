@@ -14,32 +14,10 @@ namespace Sockets.ClientServer
             Console.WriteLine("Functioneaza!");
 
             // Client Server
-            await ClientServer();
+            //await ClientServer();
 
             // Ring
-            //var ringNodes = new List<RingNode>()
-            //{
-            //    new RingNode("127.0.0.1", 1234, "127.0.0.2", 1234),
-            //    new RingNode("127.0.0.2", 1234, "127.0.0.3", 1234),
-            //    new RingNode("127.0.0.3", 1234, "127.0.0.1", 1234)
-            //};
-
-            //foreach(var rn in ringNodes)
-            //{
-            //    rn.Start();
-            //}
-
-            //ringNodes[0].Initiate();
-
-            //while (true)
-            //{
-            //    var nb = -1;
-            //    foreach (var rn in ringNodes)
-            //    {
-            //        nb = Math.Max(nb, rn.LastNumber);
-            //    }
-            //    if (nb == RingNode.MAX_NUMBER) break;
-            //}
+            await Ring();
 
             // Node selector
             //var selector_ips = new List<string>()
@@ -95,6 +73,25 @@ namespace Sockets.ClientServer
             await client.Connect();
             client.Disconnect();
             server.StopListening();
+        }
+
+        static Task Ring() {
+            var ringNodes = new List<RingNode>()
+            {
+                new RingNode("127.0.0.1", 1234, "127.0.0.2", 1234),
+                new RingNode("127.0.0.2", 1234, "127.0.0.3", 1234),
+                new RingNode("127.0.0.3", 1234, "127.0.0.1", 1234)
+            };
+
+            foreach (var rn in ringNodes) {
+                rn.StartListening();
+            }
+
+            Semaphore.Finished = false;
+            ringNodes[0].Initiate();
+            while (!Semaphore.Finished) ;
+
+            return Task.CompletedTask;
         }
     }
 }
